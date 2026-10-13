@@ -1,0 +1,18 @@
+{
+  "command": "node",
+  "args": ["main.mjs"],
+  "restart_policy": "always",
+  "display_name": "Word Document Viewer",
+  "description": "View and analyze Word (.docx, .doc) documents directly in the side panel.",
+  "has_web_ui": true,
+  "ui_config": {
+    "display_name": "Word Document Viewer",
+    "views": [
+      {
+        "path": "/",
+        "entrypoint": "SIDECAR_UI_ENTRYPOINT_AUX_PANE",
+        "title": "Word Document Viewer"
+      }
+    ]
+  }
+}

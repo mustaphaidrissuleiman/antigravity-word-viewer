@@ -1,0 +1,12 @@
+{
+  "name": "word-viewer",
+  "displayName": "Word Document Viewer",
+  "version": "1.0.0",
+  "description": "Interactive Word (.docx, .doc) document viewer & editor in the side panel with in-place text editing, rich formatting, layout rendering, outline navigation, and Antigravity agent integration.",
+  "logo": "assets/logo.svg",
+  "suggestedPrompts": [
+    "Open the Word document viewer in the side panel",
+    "Analyze the open Word document",
+    "Find all Word documents in my current workspace"
+  ]
+}
