@@ -121,15 +121,15 @@ function resolveDocPath(inputPath, workspaceUris = []) {
     cleaned = join(homedir(), cleaned.slice(2));
   }
 
-  // 1. Check raw path directly
-  if (existsSync(cleaned) && statSync(cleaned).isFile()) {
+  // 1. Check raw path directly (must be a Word document)
+  if (existsSync(cleaned) && statSync(cleaned).isFile() && isWordDoc(cleaned)) {
     return cleaned;
   }
 
   // 2. Check URL-decoded path
   try {
     const decoded = decodeURIComponent(cleaned);
-    if (existsSync(decoded) && statSync(decoded).isFile()) {
+    if (existsSync(decoded) && statSync(decoded).isFile() && isWordDoc(decoded)) {
       return decoded;
     }
   } catch {}
@@ -157,11 +157,11 @@ function resolveDocPath(inputPath, workspaceUris = []) {
     if (!existsSync(base)) continue;
     try {
       const candidate = join(base, cleaned);
-      if (existsSync(candidate) && statSync(candidate).isFile()) {
+      if (existsSync(candidate) && statSync(candidate).isFile() && isWordDoc(candidate)) {
         return candidate;
       }
       const decodedCandidate = join(base, decodeURIComponent(cleaned));
-      if (existsSync(decodedCandidate) && statSync(decodedCandidate).isFile()) {
+      if (existsSync(decodedCandidate) && statSync(decodedCandidate).isFile() && isWordDoc(decodedCandidate)) {
         return decodedCandidate;
       }
     } catch {}
@@ -268,8 +268,8 @@ app.api('/api/workspace-docs', (data) => {
 
 app.api('/api/raw-doc', (data) => {
   const resolved = resolveDocPath(data?.path, data?.workspaceUris);
-  if (!resolved) {
-    return new Response(JSON.stringify({ error: `File not found: ${data?.path || ''}` }), {
+  if (!resolved || !isWordDoc(resolved)) {
+    return new Response(JSON.stringify({ error: `File not found or not a Word document: ${data?.path || ''}` }), {
       contentType: 'application/json',
       status: 404,
     });
@@ -295,8 +295,8 @@ app.api('/api/load-doc', (data) => {
 
   try {
     const resolved = resolveDocPath(inputPath, data?.workspaceUris);
-    if (!resolved) {
-      return { success: false, error: `File not found: ${inputPath}` };
+    if (!resolved || !isWordDoc(resolved)) {
+      return { success: false, error: `File not found or not a Word document: ${inputPath}` };
     }
 
     const stat = statSync(resolved);
@@ -334,6 +334,16 @@ app.api('/api/save-doc', (data) => {
 
   try {
     const resolved = resolveDocPath(inputPath, data?.workspaceUris) || inputPath;
+    const ext = extname(resolved).toLowerCase();
+    if (ext !== '.docx' && ext !== '.dotx') {
+      return { success: false, error: 'Only .docx or .dotx files can be saved' };
+    }
+
+    const fname = basename(resolved);
+    if (fname.startsWith('.')) {
+      return { success: false, error: 'Cannot save to hidden files' };
+    }
+
     const buffer = Buffer.from(base64, 'base64');
     writeFileSync(resolved, buffer);
     const stat = statSync(resolved);
